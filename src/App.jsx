@@ -359,6 +359,7 @@ function Dashboard({ profile, houses, profiles, publicEntries, events, settings 
           {events.length === 0 && <p className="text-[11px] text-slate-400 mt-2">No events scheduled.</p>}
         </div>
       </div>
+      </div>
     </div>
   );
 }
