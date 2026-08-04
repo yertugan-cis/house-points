@@ -17,6 +17,73 @@ const NAVY = "#003057";
 const RED = "#E4392E";
 const HOUSE_ICONS = { polar: Snowflake, caribou: PawPrint, wolves: PawPrint };
 
+// Outlined maple leaf, repeated as a tiled background image so each row can
+// animate its background-position instead of animating many DOM nodes.
+const MAPLE_LEAF_SVG = encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="110" viewBox="0 0 120 110">
+  <path d="M60 6 L68 28 L88 16 L82 38 L104 34 L88 50 L108 60 L86 64 L96 84 L74 76 L72 100 L60 82 L48 100 L46 76 L24 84 L34 64 L12 60 L32 50 L16 34 L38 38 L32 16 L52 28 Z"
+    fill="none" stroke="#E4392E" stroke-width="3" stroke-linejoin="round"/>
+</svg>`);
+const MAPLE_LEAF_URL = `url("data:image/svg+xml,${MAPLE_LEAF_SVG}")`;
+
+function MapleBackground() {
+  const rows = 6;
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ background: NAVY }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className={i % 2 === 0 ? "leaf-row-right" : "leaf-row-left"}
+          style={{
+            position: "absolute",
+            top: `${i * 20}%`,
+            left: 0,
+            right: 0,
+            height: "22%",
+            backgroundImage: MAPLE_LEAF_URL,
+            backgroundRepeat: "repeat-x",
+            backgroundSize: "120px 110px",
+            opacity: 0.9,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+const CREST_IMAGES = {
+  polar: "/crests/polar.png",
+  caribou: "/crests/caribou.png",
+  wolves: "/crests/wolves.png",
+};
+
+function HouseCrest({ house, size = 90 }) {
+  const src = CREST_IMAGES[house.id];
+  if (!src) return null;
+  return <img src={src} alt={house.name} style={{ width: size, height: "auto" }} />;
+}
+
+function Hero({ profile, houses }) {
+  return (
+    <div className="relative overflow-hidden" style={{ minHeight: 260 }}>
+      <MapleBackground />
+      <div className="relative px-8 py-10 flex items-center justify-between max-w-5xl mx-auto">
+        <div>
+          <p className="text-xs tracking-widest text-blue-200 font-medium mb-1">WELCOME TO</p>
+          <h1 className="text-3xl font-bold text-white leading-tight">
+            CIS House Hub, {profile.full_name?.split(" ")[0]}
+          </h1>
+        </div>
+        <div className="flex gap-3">
+          {houses.map((h) => (
+            <HouseCrest key={h.id} house={h} size={110} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const iso = (d) => d.toISOString().slice(0, 10);
 const inRange = (dateStr, from, to) => dateStr >= from && dateStr <= to;
 const monthRange = (d) => {
@@ -95,13 +162,14 @@ function TopNav({ view, setView, profile }) {
     { id: "houses", label: "Houses", icon: Rows3 },
     ...(profile.role === "admin" ? [{ id: "admin", label: "Admin", icon: ShieldCheck }] : []),
   ];
+  const initials = profile.full_name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "?";
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white">
+    <div className="flex items-center justify-between px-6 py-3" style={{ background: NAVY }}>
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: NAVY }}>
-          <ShieldCheck size={16} className="text-white" />
-        </div>
-        <span className="text-sm font-medium text-slate-900">CIS Astana — House Points</span>
+        <svg width="20" height="20" viewBox="0 0 120 110">
+          <path d="M60 6 L68 28 L88 16 L82 38 L104 34 L88 50 L108 60 L86 64 L96 84 L74 76 L72 100 L60 82 L48 100 L46 76 L24 84 L34 64 L12 60 L32 50 L16 34 L38 38 L32 16 L52 28 Z" fill="none" stroke={RED} strokeWidth="6" strokeLinejoin="round" />
+        </svg>
+        <span className="text-sm font-semibold text-white tracking-wide">CANADIAN INTERNATIONAL SCHOOL</span>
       </div>
       <div className="flex items-center gap-6 text-sm">
         {tabs.map((t) => (
@@ -109,16 +177,18 @@ function TopNav({ view, setView, profile }) {
             key={t.id}
             onClick={() => setView(t.id)}
             className={`flex items-center gap-1.5 pb-0.5 border-b-2 ${
-              view === t.id ? "text-slate-900 font-medium" : "border-transparent text-slate-500 hover:text-slate-700"
+              view === t.id ? "text-white font-medium border-white" : "border-transparent text-blue-200 hover:text-white"
             }`}
-            style={view === t.id ? { borderColor: NAVY } : {}}
           >
             <t.icon size={14} />
             {t.label}
           </button>
         ))}
-        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-1 text-xs text-slate-400">
-          <LogOut size={13} /> Sign out
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ background: RED }}>
+          {initials}
+        </div>
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-1 text-xs text-blue-200 hover:text-white">
+          <LogOut size={14} />
         </button>
       </div>
     </div>
@@ -200,7 +270,9 @@ function Dashboard({ profile, houses, profiles, publicEntries, events, settings 
   const eventDates = new Set(events.map((e) => e.date));
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-4">
+    <div>
+      <Hero profile={profile} houses={houses} />
+      <div className="p-6 max-w-5xl mx-auto space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {houses.map((h) => (
           <HouseCard key={h.id} house={h} month={totals.byHouseMonth[h.id] || 0} year={totals.byHouseYear[h.id] || 0} leading={leadingHouse?.id === h.id} />
