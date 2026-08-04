@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes leaf-scroll-right {
+  from { background-position-x: 0; }
+  to { background-position-x: 120px; }
+}
+@keyframes leaf-scroll-left {
+  from { background-position-x: 0; }
+  to { background-position-x: -120px; }
+}
+.leaf-row-right {
+  animation: leaf-scroll-right 6s linear infinite;
+}
+.leaf-row-left {
+  animation: leaf-scroll-left 6s linear infinite;
+}
